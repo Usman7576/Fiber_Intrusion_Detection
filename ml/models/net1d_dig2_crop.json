@@ -1,0 +1,15 @@
+{
+  "model": "net1d",
+  "classes": [
+    "background",
+    "dig",
+    "knock",
+    "water",
+    "shake",
+    "walk"
+  ],
+  "downsample": 10,
+  "normalise": "sample",
+  "params": 181254,
+  "test_accuracy": 0.9798897178073305
+}

@@ -23,9 +23,24 @@ on-the-fly augmentation (random time shift ±25%, amplitude scale 0.8–1.2, Gau
 | `net1d_noaug` | no augmentation | 98.96% | 0.989 | 0.12% | 0.04% | 1.39% |
 | `net1d_dig2` | augment + 2× loss weight on dig | 99.03% | 0.990 | 0.12% | 0.08% | **0.80%** |
 
+Two more ablations, both built on `net1d_dig2`:
+
+| Run | Change | Val acc | Test acc | Macro-F1 | NAR | FNR | Dig miss |
+|---|---|---|---|---|---|---|---|
+| `net1d_dig2_crop` | + random crop (80–100%) and stretch back to full length | 99.03% | 97.99% | 0.979 | 0.16% | 0.20% | 1.39% |
+| `net1d_dig2_chnorm` | z-score each fiber point separately instead of the whole sample | 99.43% | **99.19%** | **0.992** | **0.04%** | 0.08% | **0.60%** |
+
+- **Crop + resize hurts** by about 1 point, worst on water (F1 0.953) and shake (0.969). Stretching the signal shifts
+  its frequency content, and the classes differ mainly in their spectra (`explore_spectra.png`), so this augmentation
+  changes what makes a sample its class. It stays off.
+- **Per-point normalisation is the best test result**, but on validation it ties exactly with `net1d_dig2` (99.43%).
+  Choosing it on the test score would be selecting on the test set. It also removes each recording's per-point
+  baseline light level (the session "fingerprint" found in Phase 2), which should matter most on unseen sessions.
+  **Decision is deferred to Phase 4:** whichever of the two does better on held-out recorders/sessions gets deployed.
+
 On a 3,083-sample test set, 0.1 percentage points is about 3 samples. The ablation differences are within run-to-run noise.
 Augmentation helps a little. The dig weight trades nothing measurable in accuracy for about one-third fewer missed digging events.
-Digging is the most dangerous threat to a buried cable, so **`net1d_dig2` is the model deployed in the backend**.
+Digging is the most dangerous threat to a buried cable, so the dig weight is kept in every later run.
 
 ## Comparison with the baselines
 
@@ -60,3 +75,11 @@ Per-class F1, deployed model vs. tuned SVM:
 
 Files: `metrics_net1d*.json`, `metrics_cnn_bilstm.json`, `metrics_spec_cnn.json`, matching `confusion_*.png` and
 `history_*.csv`; weights in `ml/models/`.
+
+## Supporting figures
+
+- `explore_waterfalls.png`, `explore_traces.png`: one raw sample per class (Phase 1 exploration, `ml/scripts/explore_data.py`).
+- `explore_point_std.png`: event energy is concentrated on fiber points 4–9; background is flat.
+- `explore_spectra.png`: background is about two decades lower in power and shows a few narrow interference lines; shake
+  and water carry the most high-frequency power (spectral centroid 0.28 and 0.23 vs ≈0.10 for knock, walk and background).
+- `summary_table.csv`, `summary_tradeoff.png`, `summary_curves.png`: every run side by side (`ml/scripts/summarize_results.py`).
