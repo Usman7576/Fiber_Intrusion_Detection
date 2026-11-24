@@ -61,6 +61,65 @@ def predict(model: nn.Module, loader: DataLoader) -> tuple[np.ndarray, np.ndarra
     return np.concatenate(probs), np.concatenate(ys)
 
 
+def fit(model: nn.Module, train_dl: DataLoader, val_dl: DataLoader | None = None, *, epochs: int, lr: float,
+        weight_decay: float = 1e-5, dig_weight: float = 1.0, scheduler: str = "none", patience: int = 10,
+        verbose: bool = True):
+    """Train `model` in place. With `val_dl`, keep the epoch with the best validation accuracy and stop early after
+    `patience` epochs without improvement. Without it, train for exactly `epochs` and keep the final weights
+    (used by cross-validation, where no held-out data may be peeked at).
+    Returns (state_dict, history, best_epoch, best_val_acc)."""
+    opt = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    sched = None
+    if scheduler == "cosine":
+        sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=epochs)
+    elif scheduler == "plateau":
+        if val_dl is None:
+            raise ValueError("plateau scheduler needs a validation loader")
+        sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, mode="max", factor=0.5, patience=3)
+    weights = torch.ones(len(CLASS_NAMES))
+    weights[CLASS_NAMES.index("dig")] = dig_weight
+    loss_fn = nn.CrossEntropyLoss(weight=weights)
+
+    history, best_acc, best_state, best_epoch, bad = [], -1.0, None, 0, 0
+    for epoch in range(1, epochs + 1):
+        model.train()
+        t0, total, correct, loss_sum = time.perf_counter(), 0, 0, 0.0
+        for xb, yb in train_dl:
+            opt.zero_grad()
+            out = model(xb)
+            loss = loss_fn(out, yb)
+            loss.backward()
+            opt.step()
+            loss_sum += loss.item() * len(yb)
+            correct += (out.argmax(1) == yb).sum().item()
+            total += len(yb)
+        val_acc = float("nan")
+        if val_dl is not None:
+            vp, vy = predict(model, val_dl)
+            val_acc = float((vp.argmax(1) == vy).mean())
+        if sched is not None:
+            sched.step(val_acc) if scheduler == "plateau" else sched.step()
+        history.append({"epoch": epoch, "train_loss": loss_sum / total, "train_acc": correct / total,
+                        "val_acc": val_acc, "lr": opt.param_groups[0]["lr"], "seconds": time.perf_counter() - t0})
+        flag = ""
+        if val_dl is None:
+            best_state, best_epoch = None, epoch
+        elif val_acc > best_acc:
+            best_acc, best_state, best_epoch, bad, flag = val_acc, copy.deepcopy(model.state_dict()), epoch, 0, " *"
+        else:
+            bad += 1
+        if verbose:
+            print(f"epoch {epoch:3d}  loss {loss_sum / total:.4f}  train {correct / total:.2%}  "
+                  f"val {val_acc:.2%}  ({history[-1]['seconds']:.0f}s){flag}", flush=True)
+        if val_dl is not None and bad >= patience:
+            if verbose:
+                print(f"early stop: no improvement for {patience} epochs")
+            break
+    if val_dl is None:
+        best_state = copy.deepcopy(model.state_dict())
+    return best_state, history, best_epoch, best_acc
+
+
 def main(argv=None) -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model", required=True)
@@ -98,46 +157,10 @@ def main(argv=None) -> None:
     model = build_model(args.model)
     n_params = count_params(model)
     print(f"params: {n_params:,}")
-    opt = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    sched = None
-    if args.scheduler == "cosine":
-        sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs)
-    elif args.scheduler == "plateau":
-        sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, mode="max", factor=0.5, patience=3)
-    weights = torch.ones(len(CLASS_NAMES))
-    weights[CLASS_NAMES.index("dig")] = args.dig_weight
-    loss_fn = nn.CrossEntropyLoss(weight=weights)
-
-    history, best_acc, best_state, best_epoch, bad = [], -1.0, None, 0, 0
     t_start = time.perf_counter()
-    for epoch in range(1, args.epochs + 1):
-        model.train()
-        t0, total, correct, loss_sum = time.perf_counter(), 0, 0, 0.0
-        for xb, yb in train_dl:
-            opt.zero_grad()
-            out = model(xb)
-            loss = loss_fn(out, yb)
-            loss.backward()
-            opt.step()
-            loss_sum += loss.item() * len(yb)
-            correct += (out.argmax(1) == yb).sum().item()
-            total += len(yb)
-        vp, vy = predict(model, val_dl)
-        val_acc = float((vp.argmax(1) == vy).mean())
-        if sched is not None:
-            sched.step(val_acc) if args.scheduler == "plateau" else sched.step()
-        history.append({"epoch": epoch, "train_loss": loss_sum / total, "train_acc": correct / total,
-                        "val_acc": val_acc, "lr": opt.param_groups[0]["lr"], "seconds": time.perf_counter() - t0})
-        flag = ""
-        if val_acc > best_acc:
-            best_acc, best_state, best_epoch, bad, flag = val_acc, copy.deepcopy(model.state_dict()), epoch, 0, " *"
-        else:
-            bad += 1
-        print(f"epoch {epoch:3d}  loss {loss_sum / total:.4f}  train {correct / total:.2%}  "
-              f"val {val_acc:.2%}  ({history[-1]['seconds']:.0f}s){flag}", flush=True)
-        if bad >= args.patience:
-            print(f"early stop: no improvement for {args.patience} epochs")
-            break
+    best_state, history, best_epoch, best_acc = fit(
+        model, train_dl, val_dl, epochs=args.epochs, lr=args.lr, weight_decay=args.weight_decay,
+        dig_weight=args.dig_weight, scheduler=args.scheduler, patience=args.patience)
 
     model.load_state_dict(best_state)
     tp, ty = predict(model, test_dl)

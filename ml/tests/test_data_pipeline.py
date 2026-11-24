@@ -90,3 +90,9 @@ def test_crop_resize_keeps_shape_and_stretches():
         assert y[0, -1] - y[0, 0] <= 999 + 1e-3      # a window, so the range can only shrink
     y = augment(preprocess(_fake_sample(np.random.default_rng(4))), np.random.default_rng(5), crop=True)
     assert y.shape == (12, 1000)
+
+
+def test_session_id():
+    from phiotdr.data_loader import session_id
+    assert session_id("220122_cxm_walk_01_single_data_6.mat") == "220122_cxm_walk_01"
+    assert session_id("/05_shake/220517_shake_slow3_single_data_12.mat") == "220517_shake_slow3"

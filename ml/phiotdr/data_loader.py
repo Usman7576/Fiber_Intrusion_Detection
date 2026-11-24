@@ -43,6 +43,15 @@ def parse_filename(name: str) -> dict:
     return {"date": m["date"], "recorder": "unknown" if rec in _EVENT_WORDS else rec}
 
 
+_SESSION_RE = re.compile(r"_single_data_\d+$")
+
+
+def session_id(name: str) -> str:
+    """One continuous recording, cut into many samples: '220122_cxm_walk_01_single_data_6.mat' -> '220122_cxm_walk_01'.
+    Samples from the same session share background conditions, so cross-validation must keep a session on one side."""
+    return _SESSION_RE.sub("", Path(name).stem)
+
+
 def read_label_file(split_dir: Path) -> pd.DataFrame:
     """Parse <split_dir>/label.txt into a DataFrame.
 
