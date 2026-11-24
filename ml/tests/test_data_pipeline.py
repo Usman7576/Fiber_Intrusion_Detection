@@ -35,6 +35,8 @@ def fake_raw(tmp_path):
 def test_parse_filename():
     assert parse_filename("220113_jzy_water_02_single_data_11.mat") == {"date": "220113", "recorder": "jzy"}
     assert parse_filename("weird.mat")["recorder"] == "unknown"
+    assert parse_filename("220517_digging_fast1_single_data_3.mat") == {"date": "220517", "recorder": "unknown"}
+    assert parse_filename("220509_bkg_04_walk30s_single_data_1.mat")["recorder"] == "unknown"
 
 
 def test_load_index(fake_raw):

@@ -22,7 +22,12 @@ from scipy.io import loadmat
 from .config import CLASS_NAMES, MAT_KEY, NUM_POINTS, RAW_DIR, RAW_TIME
 
 # 220112_cxm_background_01_single_data_1.mat -> date=220112, recorder=cxm
+# Later sessions (Apr-May 2022) omit the initials: 220517_digging_fast1_single_data_3.mat -> recorder=unknown
 _NAME_RE = re.compile(r"^(?P<date>\d{6})_(?P<recorder>[A-Za-z]+)_")
+_EVENT_WORDS = {
+    "background", "bkg", "dig", "digging", "knock", "knocking", "water", "watering",
+    "shake", "shaking", "walk", "walking", "run", "running",
+}
 
 
 class SampleError(ValueError):
@@ -34,7 +39,8 @@ def parse_filename(name: str) -> dict:
     m = _NAME_RE.match(Path(name).name)
     if not m:
         return {"date": None, "recorder": "unknown"}
-    return {"date": m["date"], "recorder": m["recorder"].lower()}
+    rec = m["recorder"].lower()
+    return {"date": m["date"], "recorder": "unknown" if rec in _EVENT_WORDS else rec}
 
 
 def read_label_file(split_dir: Path) -> pd.DataFrame:

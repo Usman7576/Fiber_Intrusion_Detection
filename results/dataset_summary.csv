@@ -1,0 +1,4 @@
+split,background,dig,knock,shake,walk,water,total
+test,588,502,506,546,490,451,3083
+train,2357,2010,2024,2182,1960,1802,12335
+total,2945,2512,2530,2728,2450,2253,15418
