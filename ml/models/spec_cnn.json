@@ -1,0 +1,15 @@
+{
+  "model": "spec_cnn",
+  "classes": [
+    "background",
+    "dig",
+    "knock",
+    "water",
+    "shake",
+    "walk"
+  ],
+  "downsample": 10,
+  "normalise": "sample",
+  "params": 104734,
+  "test_accuracy": 0.9854038274408045
+}

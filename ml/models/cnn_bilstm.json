@@ -1,0 +1,15 @@
+{
+  "model": "cnn_bilstm",
+  "classes": [
+    "background",
+    "dig",
+    "knock",
+    "water",
+    "shake",
+    "walk"
+  ],
+  "downsample": 10,
+  "normalise": "sample",
+  "params": 151943,
+  "test_accuracy": 0.9879987025624392
+}
