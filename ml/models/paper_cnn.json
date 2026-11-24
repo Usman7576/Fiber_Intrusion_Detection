@@ -1,0 +1,15 @@
+{
+  "model": "paper_cnn",
+  "classes": [
+    "background",
+    "dig",
+    "knock",
+    "water",
+    "shake",
+    "walk"
+  ],
+  "downsample": 10,
+  "normalise": "sample",
+  "params": 4721,
+  "test_accuracy": 0.8589036652611093
+}
