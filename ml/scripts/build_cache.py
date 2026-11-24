@@ -1,7 +1,7 @@
 """Preprocess every sample once and cache it as .npy so training never re-reads 15k .mat files.
 
 Usage:
-    python ml/scripts/build_cache.py [--raw-dir ml/data/raw] [--factor 10]
+    python ml/scripts/build_cache.py [--raw-dir ml/data/raw] [--factor 10] [--norm channel]
 
 Writes to ml/data/processed/:
     train_X.npy, test_X.npy   float16, shape (N, 12, 10000 // factor)
@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from phiotdr.config import DOWNSAMPLE, PROCESSED_DIR, RAW_DIR, SEED, VAL_FRACTION  # noqa: E402
+from phiotdr.config import DOWNSAMPLE, NORMALISE, PROCESSED_DIR, RAW_DIR, SEED, VAL_FRACTION  # noqa: E402
 from phiotdr.data_loader import SampleError, load_index, load_mat  # noqa: E402
 from phiotdr.preprocess import preprocess  # noqa: E402
 
@@ -30,6 +30,8 @@ def main() -> None:
     ap.add_argument("--raw-dir", type=Path, default=RAW_DIR)
     ap.add_argument("--out-dir", type=Path, default=PROCESSED_DIR)
     ap.add_argument("--factor", type=int, default=DOWNSAMPLE)
+    ap.add_argument("--norm", choices=["sample", "channel"], default=NORMALISE,
+                    help="non-default modes only write {split}_X_<norm>.npy (labels and meta are shared)")
     args = ap.parse_args()
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -38,7 +40,7 @@ def main() -> None:
         X, keep = [], []
         for i, row in enumerate(tqdm(df.itertuples(), total=len(df), desc=split)):
             try:
-                X.append(preprocess(load_mat(row.path), factor=args.factor).astype(np.float16))
+                X.append(preprocess(load_mat(row.path), factor=args.factor, mode=args.norm).astype(np.float16))
                 keep.append(i)
             except (SampleError, FileNotFoundError) as exc:
                 print(f"skip {row.path}: {exc}")
@@ -46,6 +48,10 @@ def main() -> None:
         if split == "train":
             _, val_idx = train_test_split(meta.index, test_size=VAL_FRACTION, stratify=meta["label"], random_state=SEED)
             meta["is_val"] = meta.index.isin(val_idx)
+        if args.norm != NORMALISE:
+            np.save(args.out_dir / f"{split}_X_{args.norm}.npy", np.stack(X))
+            print(f"{split}: {len(X)} samples -> {split}_X_{args.norm}.npy")
+            continue
         np.save(args.out_dir / f"{split}_X.npy", np.stack(X))
         np.save(args.out_dir / f"{split}_y.npy", meta["label"].to_numpy(np.int64))
         meta.to_csv(args.out_dir / f"{split}_meta.csv", index=False)

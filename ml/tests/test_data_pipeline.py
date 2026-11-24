@@ -8,7 +8,7 @@ from scipy.io import savemat
 
 from phiotdr.config import CLASS_FOLDERS, NUM_POINTS, RAW_TIME
 from phiotdr.data_loader import SampleError, load_index, load_mat, parse_filename
-from phiotdr.preprocess import augment, downsample, preprocess
+from phiotdr.preprocess import augment, crop_resize, downsample, preprocess
 
 
 def _fake_sample(rng, event=False):
@@ -78,3 +78,15 @@ def test_augment_keeps_shape():
     x = preprocess(_fake_sample(np.random.default_rng(2)))
     y = augment(x, np.random.default_rng(3))
     assert y.shape == x.shape and y.dtype == np.float32 and not np.allclose(x, y)
+
+
+def test_crop_resize_keeps_shape_and_stretches():
+    x = np.tile(np.arange(1000, dtype=np.float32), (12, 1))
+    rng = np.random.default_rng(0)
+    for _ in range(5):
+        y = crop_resize(x, rng)
+        assert y.shape == x.shape and y.dtype == np.float32
+        assert np.all(np.diff(y[0]) >= 0)            # order preserved
+        assert y[0, -1] - y[0, 0] <= 999 + 1e-3      # a window, so the range can only shrink
+    y = augment(preprocess(_fake_sample(np.random.default_rng(4))), np.random.default_rng(5), crop=True)
+    assert y.shape == (12, 1000)

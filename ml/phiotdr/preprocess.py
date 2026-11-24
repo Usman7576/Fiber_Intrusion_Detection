@@ -42,9 +42,25 @@ def preprocess(raw: np.ndarray, factor: int = DOWNSAMPLE, mode: str = NORMALISE)
 
 # ---------------------------------------------------------------- augmentation (train only)
 
-def augment(x: np.ndarray, rng: np.random.Generator) -> np.ndarray:
-    """Random, label-preserving perturbations of a (points, time) sample."""
+def crop_resize(x: np.ndarray, rng: np.random.Generator, min_frac: float = 0.8) -> np.ndarray:
+    """Cut a random window of 80-100% of the time axis and stretch it back to full length
+    (linear interpolation): simulates slightly faster/slower events."""
+    t = x.shape[1]
+    w = int(rng.uniform(min_frac, 1.0) * t)
+    if w >= t:
+        return x
+    start = rng.integers(0, t - w + 1)
+    src = np.linspace(0, w - 1, t)
+    seg = x[:, start:start + w]
+    return np.stack([np.interp(src, np.arange(w), ch) for ch in seg]).astype(np.float32)
+
+
+def augment(x: np.ndarray, rng: np.random.Generator, crop: bool = False) -> np.ndarray:
+    """Random, label-preserving perturbations of a (points, time) sample.
+    `crop=True` also applies random crop + resize with probability 0.5."""
     x = x.copy()
+    if crop and rng.random() < 0.5:
+        x = crop_resize(x, rng)
     # circular time shift up to 25%
     x = np.roll(x, rng.integers(-x.shape[1] // 4, x.shape[1] // 4 + 1), axis=1)
     # amplitude scaling

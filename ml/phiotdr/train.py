@@ -29,8 +29,8 @@ from .preprocess import augment
 
 
 class ArrayDataset(Dataset):
-    def __init__(self, X: np.ndarray, y: np.ndarray, train_aug: bool = False, seed: int = SEED):
-        self.X, self.y, self.aug = X, y, train_aug
+    def __init__(self, X: np.ndarray, y: np.ndarray, train_aug: bool = False, seed: int = SEED, crop: bool = False):
+        self.X, self.y, self.aug, self.crop = X, y, train_aug, crop
         self.rng = np.random.default_rng(seed)
 
     def __len__(self):
@@ -39,12 +39,13 @@ class ArrayDataset(Dataset):
     def __getitem__(self, i):
         x = self.X[i].astype(np.float32)
         if self.aug:
-            x = augment(x, self.rng)
+            x = augment(x, self.rng, crop=self.crop)
         return torch.from_numpy(x), int(self.y[i])
 
 
-def load_split(split: str):
-    X = np.load(PROCESSED_DIR / f"{split}_X.npy")
+def load_split(split: str, norm: str = NORMALISE):
+    suffix = "" if norm == "sample" else f"_{norm}"       # build_cache.py --norm channel writes *_X_channel.npy
+    X = np.load(PROCESSED_DIR / f"{split}_X{suffix}.npy")
     y = np.load(PROCESSED_DIR / f"{split}_y.npy")
     meta = pd.read_csv(PROCESSED_DIR / f"{split}_meta.csv")
     return X, y, meta
@@ -70,6 +71,8 @@ def main(argv=None) -> None:
     ap.add_argument("--batch-size", type=int, default=100)
     ap.add_argument("--patience", type=int, default=10, help="early stopping on validation accuracy")
     ap.add_argument("--augment", action="store_true")
+    ap.add_argument("--crop", action="store_true", help="add random crop + resize to the augmentation")
+    ap.add_argument("--norm", choices=["sample", "channel"], default=NORMALISE, help="which cached normalisation to train on")
     ap.add_argument("--dig-weight", type=float, default=1.0, help="extra loss weight on the dig class")
     ap.add_argument("--scheduler", choices=["none", "cosine", "plateau"], default="none")
     ap.add_argument("--threads", type=int, default=os.cpu_count())
@@ -81,10 +84,10 @@ def main(argv=None) -> None:
     np.random.seed(args.seed)
     torch.set_num_threads(args.threads)
 
-    X, y, meta = load_split("train")
-    Xte, yte, _ = load_split("test")
+    X, y, meta = load_split("train", args.norm)
+    Xte, yte, _ = load_split("test", args.norm)
     is_val = meta["is_val"].to_numpy()
-    train_ds = ArrayDataset(X[~is_val], y[~is_val], train_aug=args.augment, seed=args.seed)
+    train_ds = ArrayDataset(X[~is_val], y[~is_val], train_aug=args.augment, seed=args.seed, crop=args.crop)
     val_ds, test_ds = ArrayDataset(X[is_val], y[is_val]), ArrayDataset(Xte, yte)
     g = torch.Generator().manual_seed(args.seed)
     train_dl = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, generator=g)
@@ -150,7 +153,7 @@ def main(argv=None) -> None:
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
     torch.save(best_state, MODELS_DIR / f"{run}.pt")
     (MODELS_DIR / f"{run}.json").write_text(json.dumps({
-        "model": args.model, "classes": CLASS_NAMES, "downsample": DOWNSAMPLE, "normalise": NORMALISE,
+        "model": args.model, "classes": CLASS_NAMES, "downsample": DOWNSAMPLE, "normalise": args.norm,
         "params": n_params, "test_accuracy": m["accuracy"]}, indent=2))
     save_report(run, m)
     pd.DataFrame(history).to_csv(RESULTS_DIR / f"history_{run}.csv", index=False)
