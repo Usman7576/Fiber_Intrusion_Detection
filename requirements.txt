@@ -1,0 +1,23 @@
+# Install PyTorch first from the CPU index:
+#   uv pip install torch --index-url https://download.pytorch.org/whl/cpu
+numpy
+scipy
+pandas
+pyarrow
+scikit-learn
+matplotlib
+seaborn
+shap
+captum
+jupyter
+ipykernel
+tqdm
+joblib
+gdown
+fastapi
+uvicorn[standard]
+pydantic
+sqlalchemy
+python-multipart
+pytest
+httpx
