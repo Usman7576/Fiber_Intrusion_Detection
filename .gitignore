@@ -30,3 +30,6 @@ Thumbs.db
 # Downloaded archives
 *.zip
 *.rar
+
+# Local tool config
+.claude/
