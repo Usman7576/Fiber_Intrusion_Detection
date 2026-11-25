@@ -107,8 +107,8 @@ export function TimeImportance({ values }: { values: number[] }) {
           </linearGradient>
         </defs>
         <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
-        <XAxis dataKey="t" tick={{ fill: "#5B677B", fontSize: 10 }} tickLine={false} axisLine={false} interval={19} unit=" s" />
-        <YAxis domain={[0, 1]} tick={{ fill: "#5B677B", fontSize: 10 }} tickLine={false} axisLine={false} ticks={[0, 0.5, 1]} />
+        <XAxis dataKey="t" tick={{ fill: "#7D8AA0", fontSize: 10 }} tickLine={false} axisLine={false} interval={19} unit=" s" />
+        <YAxis domain={[0, 1]} tick={{ fill: "#7D8AA0", fontSize: 10 }} tickLine={false} axisLine={false} ticks={[0, 0.5, 1]} />
         <Tooltip {...tooltipStyle} formatter={(v) => [Number(v).toFixed(2), "Grad-CAM"]} labelFormatter={(l) => `t = ${l} s`} />
         <Area type="monotone" dataKey="v" stroke="#22D3EE" strokeWidth={1.5} fill="url(#cam)" isAnimationActive={false} />
       </AreaChart>
@@ -123,8 +123,8 @@ export function PointImportance({ values, color = "#F59E0B" }: { values: number[
     <ResponsiveContainer width="100%" height={140}>
       <BarChart data={data} margin={{ top: 6, right: 8, left: -22, bottom: 0 }}>
         <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
-        <XAxis dataKey="p" tick={{ fill: "#5B677B", fontSize: 10 }} tickLine={false} axisLine={false} interval={0} />
-        <YAxis tick={{ fill: "#5B677B", fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={(v) => `${Math.round(v * 100)}%`} />
+        <XAxis dataKey="p" tick={{ fill: "#7D8AA0", fontSize: 10 }} tickLine={false} axisLine={false} interval={0} />
+        <YAxis tick={{ fill: "#7D8AA0", fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={(v) => `${Math.round(v * 100)}%`} />
         <Tooltip {...tooltipStyle} cursor={{ fill: "rgba(255,255,255,0.04)" }} formatter={(v) => [`${(Number(v) * 100).toFixed(1)}%`, "share"]} />
         <Bar dataKey="v" radius={[4, 4, 0, 0]} isAnimationActive={false}>
           {data.map((d) => (

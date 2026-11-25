@@ -161,7 +161,7 @@ export function FiberRoute() {
         </defs>
         <path d={path} fill="none" stroke="rgb(255 255 255 / 0.05)" strokeWidth={14} strokeLinecap="round" />
         <path d={path} fill="none" stroke="url(#fiber)" strokeWidth={2.5} strokeLinecap="round" />
-        <text x={x0 - 30} y={yOf(x0) + 4} fontSize={11} fill="#5B677B">CO</text>
+        <text x={x0 - 30} y={yOf(x0) + 4} fontSize={11} fill="#7D8AA0">CO</text>
         {pts.map(({ x, y }, i) => {
           const e = Math.min(1, energy[i] / 3);
           const isTop = active && i === top;
@@ -174,7 +174,7 @@ export function FiberRoute() {
               <text x={x} y={y - 18 - 6 * e} textAnchor="middle" fontSize={11} fill={isTop ? alertColor : "#8B98AD"} className="num">
                 P{i + 1}
               </text>
-              <text x={x} y={H - 6} textAnchor="middle" fontSize={10} fill="#5B677B" className="num">
+              <text x={x} y={H - 6} textAnchor="middle" fontSize={10} fill="#7D8AA0" className="num">
                 {(i + 1) * POINT_SPACING_M} m
               </text>
             </g>

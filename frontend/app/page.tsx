@@ -40,7 +40,7 @@ export default function LiveMonitor() {
           value={lastThreat ? classMeta(lastThreat.predicted_class).label : "None"}
           icon={<AlarmClock className="size-4" />}
           tone={lastThreat ? classMeta(lastThreat.predicted_class).color : undefined}
-          hint={lastThreat ? `${relativeTime(lastThreat.ts)} · point ${lastThreat.top_point}` : "this session"}
+          hint={lastThreat ? `${relativeTime(lastThreat.ts)} · point ${lastThreat.top_point}` : "none recorded yet"}
         />
         <Stat
           label="Model latency"

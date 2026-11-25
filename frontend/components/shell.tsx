@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, BarChart3, BookOpen, FileSearch, ListChecks, Radio, Wifi, WifiOff, X } from "lucide-react";
+import { Activity, BarChart3, BookOpen, FileSearch, ListChecks, Radio, ShieldCheck, Wifi, WifiOff, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -161,7 +161,7 @@ export function TopBar() {
 }
 
 export function AlertBanner() {
-  const { activeAlert, dismissAlert } = useStream();
+  const { activeAlert, allClear, dismissAlert } = useStream();
   const meta = activeAlert ? classMeta(activeAlert.predicted_class) : null;
   const level = activeAlert ? levelMeta(activeAlert.alert_level) : null;
   return (
@@ -199,6 +199,22 @@ export function AlertBanner() {
               <X className="size-4" />
             </button>
           </div>
+        </motion.div>
+      )}
+      {!activeAlert && allClear && (
+        <motion.div
+          key="all-clear"
+          initial={{ y: -24, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -24, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 380, damping: 32 }}
+          role="status"
+          className="mx-4 mt-3 flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm md:mx-6"
+          style={{ background: "linear-gradient(90deg, #10B98126, #10B9810d)", boxShadow: "inset 0 0 0 1px #10B98159" }}
+        >
+          <ShieldCheck className="size-5 shrink-0 text-safe" />
+          <span className="font-semibold text-safe">All clear</span>
+          <span className="text-muted">· the fiber is quiet again</span>
         </motion.div>
       )}
     </AnimatePresence>

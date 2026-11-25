@@ -59,7 +59,7 @@ function ConfusionMatrix({ m, classes }: { m: ModelMetrics; classes: string[] })
                   <td
                     key={j}
                     className="num h-11 w-16 rounded-md text-center"
-                    style={{ backgroundColor: bg, color: n ? "#E6EDF7" : "#5B677B" }}
+                    style={{ backgroundColor: bg, color: n ? "#E6EDF7" : "#7D8AA0" }}
                     title={`true ${classes[i]}, predicted ${classes[j]}: ${n} (${(share * 100).toFixed(1)}% of row)`}
                   >
                     {n}
@@ -143,7 +143,7 @@ export default function ModelsPage() {
                 <Tooltip {...tooltip} formatter={(v) => asPct(Number(v))} />
                 <Legend wrapperStyle={{ fontSize: 12, color: "#8B98AD" }} />
                 <ReferenceLine y={paper_reported.cnn} stroke="#8B98AD" strokeDasharray="4 4" />
-                <ReferenceLine y={paper_reported.svm} stroke="#5B677B" strokeDasharray="4 4" />
+                <ReferenceLine y={paper_reported.svm} stroke="#7D8AA0" strokeDasharray="4 4" />
                 <Bar dataKey="Accuracy" fill="#22D3EE" radius={[4, 4, 0, 0]} isAnimationActive={false} />
                 <Bar dataKey="Macro-F1" fill="#A78BFA" radius={[4, 4, 0, 0]} isAnimationActive={false} />
               </BarChart>
