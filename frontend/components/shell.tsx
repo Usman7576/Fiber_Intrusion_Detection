@@ -168,7 +168,10 @@ export function AlertBanner() {
     <AnimatePresence>
       {activeAlert && meta && level && (
         <motion.div
-          key={activeAlert.event_id}
+          // one fixed key: a new alert updates the banner in place. A key per event would mount a new banner each
+          // time and leave the old ones in their exit animation, which never finishes in a background tab
+          // (no animation frames), so banners would pile up in the DOM.
+          key="threat-banner"
           initial={{ y: -24, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -24, opacity: 0 }}
