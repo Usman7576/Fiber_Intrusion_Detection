@@ -7,6 +7,9 @@
     FIBER_FRAME_MS            live stream: milliseconds between frames at speed 1 (default 150)
     FIBER_TORCH_THREADS       CPU threads for PyTorch (default 2)
     FIBER_LOAD_SVM            "0" to skip loading the SVM used for model comparison (default "1")
+    FIBER_BASELINE_RUN        paper CNN run shown in the model comparison, "" to skip (default paper_cnn_long)
+
+Values in backend/.env (KEY=VALUE lines, see .env.example) are used when the variable is not already set.
 """
 
 from __future__ import annotations
@@ -19,6 +22,21 @@ from phiotdr.config import DEPLOYED_RUN
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = Path(__file__).resolve().parent / "data"
+
+
+def load_dotenv(path: Path = BACKEND_DIR / ".env") -> None:
+    """Minimal .env reader: KEY=VALUE per line, # comments, optional quotes. Real env vars win."""
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+load_dotenv()
 
 
 def _origins() -> list[str]:
@@ -36,6 +54,7 @@ class Settings:
     frames_per_sample: int = 20
     torch_threads: int = field(default_factory=lambda: int(os.getenv("FIBER_TORCH_THREADS", "2")))
     load_svm: bool = field(default_factory=lambda: os.getenv("FIBER_LOAD_SVM", "1") != "0")
+    baseline_run: str = field(default_factory=lambda: os.getenv("FIBER_BASELINE_RUN", "paper_cnn_long"))
     max_upload_bytes: int = 2 * 1024 * 1024
     demo_pack: Path = DATA_DIR / "demo_pack.npz"
     demo_index: Path = DATA_DIR / "demo_index.csv"

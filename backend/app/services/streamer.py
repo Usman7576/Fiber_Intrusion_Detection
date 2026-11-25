@@ -29,7 +29,9 @@ from ..db import EventStore
 from .inference import Engine
 
 log = logging.getLogger(__name__)
-BACKGROUND_SHARE = 0.7           # share of windows that are quiet fiber
+# Share of windows that are quiet fiber. A window lasts frames_per_sample * frame_ms = 3 s; the rest is split evenly
+# over the 5 event classes, 3 of which are threats -> a threat every 3 / (0.25 * 3/5) = 20 s on average (plan: 20-30 s).
+BACKGROUND_SHARE = 0.75
 
 
 class Subscriber:

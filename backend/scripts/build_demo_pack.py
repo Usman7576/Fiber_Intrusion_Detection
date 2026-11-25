@@ -12,6 +12,9 @@ so the demo shows realistic mistakes too. For each sample it stores
                                     (per-point z-score then pooling, see phiotdr.preprocess) -- exact, as pooling is linear
     point_std  (12,)      float32   raw per-point std (event location along the fiber)
     features   (384,)     float32   SVM features (for the model comparison)
+    to_sample_scale (1,), to_sample_offset (12,)  float32
+                                    display * scale + offset[:, None] == the per-sample-normalised input used by
+                                    the paper CNN baseline (also exact)
 
 Writes backend/app/data/demo_pack.npz and backend/app/data/demo_index.csv.
 """
@@ -59,21 +62,30 @@ def main() -> None:
     chosen = sorted(chosen)
     print(f"{len(chosen)} samples ({int((pred != y).sum())} misclassified by {DEPLOYED_RUN})")
 
-    disp, scale, pstd, max_err = [], [], [], 0.0
+    disp, scale, pstd, s_scale, s_off, max_err = [], [], [], [], [], 0.0
     for i in chosen:
         raw = load_mat(RAW_DIR / "test" / meta.loc[i, "rel_path"])
         d, s, p = display_signal(raw)
         model_in = d * s[:, None]
         max_err = max(max_err, float(np.abs(model_in - preprocess(raw, mode="channel")).max()))
+        # per-sample z-score: (pool(x) - m) / s_tot = display * s_g / s_tot + (m_c - m) / s_tot
+        x = raw.astype(np.float64)
+        m_c, m, s_tot = x.mean(0), x.mean(), x.std() + 1e-6
+        s_g = (x - m_c).std() + 1e-6
+        sample_in = d * (s_g / s_tot) + ((m_c - m) / s_tot)[:, None]
+        max_err = max(max_err, float(np.abs(sample_in - preprocess(raw, mode="sample")).max()))
+        s_scale.append(s_g / s_tot)
+        s_off.append((m_c - m) / s_tot)
         disp.append(d.astype(np.float16))
         scale.append(s)
         pstd.append(p)
-    print(f"max |display*to_model - model input| = {max_err:.2e} (before float16 storage)")
+    print(f"max reconstruction error of either model input = {max_err:.2e} (before float16 storage)")
     assert max_err < 1e-3
 
     OUT.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(OUT / "demo_pack.npz", display=np.stack(disp), to_model=np.stack(scale),
-                        point_std=np.stack(pstd), features=feats[chosen].astype(np.float32))
+                        point_std=np.stack(pstd), features=feats[chosen].astype(np.float32),
+                        to_sample_scale=np.array(s_scale, np.float32), to_sample_offset=np.stack(s_off).astype(np.float32))
     idx = meta.loc[chosen, ["file", "class_name", "label", "recorder", "date"]].reset_index(drop=True)
     idx.insert(0, "id", range(len(idx)))
     idx["session"] = idx["file"].map(session_id)

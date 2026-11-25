@@ -49,6 +49,7 @@ class Prepared:
     point_std: np.ndarray            # (12,)
     features: np.ndarray | None      # (384,)
     prep_ms: float = 0.0
+    sample_input: np.ndarray | None = None   # (12, 1000) per-sample z-scored input for the paper CNN baseline
 
 
 class DemoSamples:
@@ -60,6 +61,8 @@ class DemoSamples:
         self.to_model = pack["to_model"]
         self.point_std = pack["point_std"]
         self.features = pack["features"]
+        self.s_scale = pack["to_sample_scale"] if "to_sample_scale" in pack else None
+        self.s_offset = pack["to_sample_offset"] if "to_sample_offset" in pack else None
         self.index = pd.read_csv(settings.demo_index, dtype={"date": str})
         self.index["recorder"] = self.index["recorder"].fillna("unknown")
 
@@ -73,7 +76,8 @@ class DemoSamples:
 
     def prepared(self, i: int) -> Prepared:
         d = self.display[i]
-        return Prepared(d * self.to_model[i][:, None], d, self.point_std[i], self.features[i])
+        sample_in = None if self.s_scale is None else d * self.s_scale[i] + self.s_offset[i][:, None]
+        return Prepared(d * self.to_model[i][:, None], d, self.point_std[i], self.features[i], 0.0, sample_in)
 
 
 class Engine:
@@ -87,6 +91,14 @@ class Engine:
         self.model.eval()
         self.params = count_params(self.model)
         self.svm = joblib.load(MODELS_DIR / "svm.joblib") if settings.load_svm else None
+        self.baseline, self.baseline_run = None, settings.baseline_run
+        if self.baseline_run:                                  # paper CNN, for the model comparison
+            bcfg = json.loads((MODELS_DIR / f"{self.baseline_run}.json").read_text())
+            self.baseline_norm = bcfg["normalise"]
+            self.baseline = build_model(bcfg["model"])
+            self.baseline.load_state_dict(torch.load(MODELS_DIR / f"{self.baseline_run}.pt", weights_only=True,
+                                                     map_location="cpu"))
+            self.baseline.eval()
         self.samples = DemoSamples(settings)
         self._explain_cache: OrderedDict[int, dict] = OrderedDict()
         self.predict_prepared(self.samples.prepared(0))       # warm-up so the first request is not slow
@@ -100,12 +112,15 @@ class Engine:
         display, _, pstd = display_signal(raw, self.downsample)
         prep_ms = (time.perf_counter() - t0) * 1000
         feats = sample_features(raw).astype(np.float32) if self.svm is not None else None
-        return Prepared(x, display, pstd, feats, prep_ms)
+        sample_in = (preprocess(raw, factor=self.downsample, mode=self.baseline_norm)
+                     if self.baseline is not None else None)
+        return Prepared(x, display, pstd, feats, prep_ms, sample_in)
 
     # ------------------------------------------------------------ prediction
     @torch.no_grad()
-    def _net_proba(self, x: np.ndarray) -> np.ndarray:
-        return torch.softmax(self.model(torch.from_numpy(np.ascontiguousarray(x, np.float32))[None]), 1)[0].numpy()
+    def _net_proba(self, x: np.ndarray, model: torch.nn.Module | None = None) -> np.ndarray:
+        model = model or self.model
+        return torch.softmax(model(torch.from_numpy(np.ascontiguousarray(x, np.float32))[None]), 1)[0].numpy()
 
     def predict_prepared(self, p: Prepared, compare: bool = False, with_explanation: bool = False) -> dict:
         t0 = time.perf_counter()
@@ -134,6 +149,10 @@ class Engine:
             t0 = time.perf_counter()
             sp = self.svm.predict_proba(p.features[None])[0]
             votes.append(self._vote("svm_tuned", sp, (time.perf_counter() - t0) * 1000))
+        if self.baseline is not None and p.sample_input is not None:
+            t0 = time.perf_counter()
+            bp = self._net_proba(p.sample_input, self.baseline)
+            votes.append(self._vote(self.baseline_run, bp, (time.perf_counter() - t0) * 1000))
         return votes
 
     @staticmethod

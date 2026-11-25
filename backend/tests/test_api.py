@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -52,7 +53,8 @@ def test_samples_list_filter_and_signal(client):
 def test_sample_prediction_and_compare(client):
     p = client.get("/api/samples/0/prediction").json()
     assert p["predicted_class"] in CLASS_NAMES and abs(sum(p["confidences"].values()) - 1) < 1e-3
-    assert 1 <= p["top_point"] <= 12 and {v["model"] for v in p["compare"]} == {"net1d_dig2_chnorm", "svm_tuned"}
+    assert 1 <= p["top_point"] <= 12
+    assert {v["model"] for v in p["compare"]} == {"net1d_dig2_chnorm", "svm_tuned", "paper_cnn_long"}
 
 
 def test_demo_pack_accuracy_matches_model(client):
@@ -78,6 +80,17 @@ def test_upload_predict_and_event(client):
     assert p["alert_level"] == alert_level(p["predicted_class"], p["confidence"], 0.6)
     ev = client.get("/api/events", params={"source": "upload", "limit": 1}).json()[0]
     assert ev["id"] == p["event_id"] and ev["file"] == "burst.mat" and ev["ts"].endswith("Z")
+
+
+REAL_SAMPLE = Path(__file__).parent / "data" / "220104_sys_dig_01_single_data_10.mat"   # official test split
+
+
+def test_upload_real_dataset_sample(client):
+    r = client.post("/api/predict", files={"file": (REAL_SAMPLE.name, REAL_SAMPLE.read_bytes())})
+    assert r.status_code == 200, r.text
+    p = r.json()
+    assert p["predicted_class"] == "dig" and p["confidence"] > 0.9 and p["alert_level"] == "critical"
+    assert p["is_threat"] and len(p["compare"]) == 3
 
 
 def test_upload_transposed_is_accepted(client):
@@ -132,3 +145,15 @@ def test_stream_frames_then_prediction(client):
 ])
 def test_alert_levels(cls, conf, level):
     assert alert_level(cls, conf, 0.6) == level
+
+
+def test_dotenv_loader(tmp_path, monkeypatch):
+    from app.settings import load_dotenv
+    env = tmp_path / ".env"
+    env.write_text('# comment\nFIBER_TEST_A="x,y"\nFIBER_TEST_B=keep\n')
+    monkeypatch.delenv("FIBER_TEST_A", raising=False)
+    monkeypatch.setenv("FIBER_TEST_B", "env wins")
+    load_dotenv(env)
+    import os
+    assert os.environ["FIBER_TEST_A"] == "x,y" and os.environ["FIBER_TEST_B"] == "env wins"
+    monkeypatch.delenv("FIBER_TEST_A")
