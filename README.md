@@ -25,6 +25,8 @@ well any model handles a new site. Details: [baselines](results/baselines.md),
 [improved model](results/improved_model.md), [generalisation and explainability](results/cross_session.md),
 notebooks [01_explore](ml/notebooks/01_explore.ipynb) and [02_results](ml/notebooks/02_results.ipynb).
 
+**Project report (Word):** [docs/FiberGuard_Project_Report.docx](docs/FiberGuard_Project_Report.docx).
+
 Findings in one line each:
 - The paper's SVM is far stronger than reported (98.8% once C/gamma are tuned); its code also has a uint16 wrap-around
   bug and refits the scaler on the test set.
@@ -38,11 +40,13 @@ Findings in one line each:
 After the one-time [setup](#setup) below:
 
 ```powershell
-.un.ps1 -Prod
+.
+un.ps1 -Prod
 ```
 
 It checks the environment, starts the backend (port 8000) and the frontend (port 3000) in two windows and opens the
-browser. `.un.ps1` alone uses the development server. The 2 GB dataset is **not** needed for the demo: the app ships
+browser. `.
+un.ps1` alone uses the development server. The 2 GB dataset is **not** needed for the demo: the app ships
 the trained model and 324 official-test samples. Optional hosting on Render + Vercel: [DEPLOY.md](DEPLOY.md).
 
 | Analyze | Models |
