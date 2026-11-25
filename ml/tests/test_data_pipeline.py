@@ -96,3 +96,11 @@ def test_session_id():
     from phiotdr.data_loader import session_id
     assert session_id("220122_cxm_walk_01_single_data_6.mat") == "220122_cxm_walk_01"
     assert session_id("/05_shake/220517_shake_slow3_single_data_12.mat") == "220517_shake_slow3"
+
+
+def test_display_signal_rebuilds_channel_input():
+    from phiotdr.preprocess import display_signal
+    raw = _fake_sample(np.random.default_rng(7))
+    display, to_model, point_std = display_signal(raw)
+    assert display.shape == (12, 1000) and to_model.shape == (12,) and point_std.shape == (12,)
+    np.testing.assert_allclose(display * to_model[:, None], preprocess(raw, mode="channel"), atol=1e-3)

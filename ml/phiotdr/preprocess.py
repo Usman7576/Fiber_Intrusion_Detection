@@ -71,3 +71,24 @@ def augment(x: np.ndarray, rng: np.random.Generator, crop: bool = False) -> np.n
     if rng.random() < 0.5:
         x = x[::-1].copy()
     return x.astype(np.float32, copy=False)
+
+
+# ---------------------------------------------------------------- display (backend / UI)
+
+def display_signal(raw: np.ndarray, factor: int = DOWNSAMPLE) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Split a raw (time, points) sample into what the UI draws and what the per-point model needs.
+
+    Returns
+        display   (points, time//factor) float32: pooled signal minus each point's mean, divided by ONE global std,
+                  so the waterfall shows *which* points vibrate (per-point z-scoring would make all look alike)
+        to_model  (points,) float32: display * to_model[:, None] == preprocess(raw, mode="channel") (pooling is
+                  linear, so this is exact up to float rounding)
+        point_std (points,) float32: raw per-point standard deviation, a proxy for where along the fiber the event is
+    """
+    x = raw.astype(np.float64)
+    mean_c, std_c = x.mean(0), x.std(0)
+    centred = x - mean_c
+    s_global = centred.std() + _EPS
+    display = downsample(centred / s_global, factor).T
+    to_model = s_global / (std_c + _EPS)
+    return (np.ascontiguousarray(display, dtype=np.float32), to_model.astype(np.float32), std_c.astype(np.float32))
