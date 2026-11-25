@@ -42,6 +42,8 @@ On a 3,083-sample test set, 0.1 percentage points is about 3 samples. The ablati
 Augmentation helps a little. The dig weight trades nothing measurable in accuracy for about one-third fewer missed digging events.
 Digging is the most dangerous threat to a buried cable, so the dig weight is kept in every later run.
 
+> **Update (Phase 4):** `net1d_dig2_chnorm` is the deployed model. It is clearly better on held-out sessions (99.1% vs 97.8%) and held-out days (80.1% vs 72.8%), see `cross_session.md`.
+
 ## Comparison with the baselines
 
 | Run | Accuracy | Macro-F1 | Dig miss | Model size on disk | Latency / sample* |

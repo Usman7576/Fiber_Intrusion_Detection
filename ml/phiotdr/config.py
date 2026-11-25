@@ -11,6 +11,9 @@ DATA_DIR = ML_ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
 PROCESSED_DIR = DATA_DIR / "processed"
 MODELS_DIR = ML_ROOT / "models"
+# Model served by the backend: ml/models/<DEPLOYED_RUN>.pt + .json (the .json records its normalisation mode).
+# Chosen in Phase 4 on held-out sessions/days, see results/cross_session.md.
+DEPLOYED_RUN = "net1d_dig2_chnorm"
 RESULTS_DIR = ML_ROOT.parent / "results"
 
 # ---------------------------------------------------------------- classes

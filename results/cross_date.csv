@@ -1,0 +1,5 @@
+model,folds,accuracy_mean,macro_f1_mean,nar_mean,fnr_mean,dig_miss_rate_mean,accuracy_std,pooled_accuracy
+svm,3,0.7377,0.7208,0.0048,0.0554,0.3535,0.1032,0.7324
+paper_cnn,3,0.6474,0.6277,0.0432,0.0616,0.4144,0.0264,0.6485
+net1d_dig2,3,0.7279,0.6991,0.0445,0.0577,0.2409,0.105,0.7244
+net1d_dig2_chnorm,3,0.8011,0.7772,0.013,0.0149,0.2312,0.0825,0.7981
