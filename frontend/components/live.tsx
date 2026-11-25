@@ -143,7 +143,7 @@ export function FiberRoute() {
   }).join(" ");
   const max = Math.max(...energy);
   const top = energy.indexOf(max);
-  const active = max > 1.2;
+  const active = max > 2.2;                                   // quiet fiber peaks ~1.6x noise, events ~4x
   const alertColor = last && last.alert_level !== "normal" ? levelMeta(last.alert_level).color : "#22D3EE";
 
   return (

@@ -27,13 +27,13 @@ function SamplePicker({ onPick, busy }: { onPick: (id: number) => void; busy: bo
   const selected = id ?? items[0]?.id ?? null;
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-[110px_1fr] gap-2">
+      <div className="grid grid-cols-[110px_minmax(0,1fr)] gap-2">
         <Select aria-label="Class" value={cls} onChange={(e) => { setCls(e.target.value); setId(null); }}>
           {CLASS_NAMES.map((c) => (
             <option key={c} value={c}>{classMeta(c).label}</option>
           ))}
         </Select>
-        <Select aria-label="Sample" value={selected ?? ""} onChange={(e) => setId(Number(e.target.value))} disabled={!items.length}>
+        <Select className="w-full min-w-0" aria-label="Sample" value={selected ?? ""} onChange={(e) => setId(Number(e.target.value))} disabled={!items.length}>
           {items.map((s) => (
             <option key={s.id} value={s.id}>#{s.id} · {s.file.replace(".mat", "")}</option>
           ))}
@@ -91,7 +91,7 @@ export default function AnalyzePage() {
         <p className="text-sm text-muted">Classify one recording and see what the model looked at.</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader title="Upload a recording" subtitle="Stored in the event history" icon={<FlaskConical className="size-4" />} />
           <div className="px-5 pb-5">
@@ -124,7 +124,7 @@ export default function AnalyzePage() {
 
       {r && (
         <div className={busy ? "pointer-events-none opacity-60 transition-opacity" : "transition-opacity"}>
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
             <Card>
               <CardHeader title="Prediction" subtitle={r.title} icon={<Brain className="size-4" />} />
               <div className="space-y-5 px-5 pb-5">
@@ -132,7 +132,7 @@ export default function AnalyzePage() {
                 <ConfidenceBars confidences={r.prediction.confidences} highlight={r.prediction.predicted_class} />
               </div>
             </Card>
-            <Card className="lg:col-span-2">
+            <Card className="xl:col-span-2">
               <CardHeader
                 title="Signal and explanation"
                 subtitle="Where (fiber point) and when (time) the evidence for the predicted class is"
@@ -144,7 +144,7 @@ export default function AnalyzePage() {
             </Card>
           </div>
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3">
             {r.explanation && (
               <>
                 <Card>
@@ -162,7 +162,7 @@ export default function AnalyzePage() {
               </>
             )}
             {r.prediction.compare && (
-              <Card className={r.explanation ? "" : "lg:col-span-3"}>
+              <Card className={r.explanation ? "" : "xl:col-span-3"}>
                 <CardHeader title="Model comparison" subtitle="Same recording, three models" icon={<Scale className="size-4" />} />
                 <div className="px-5 pb-3">
                   <ModelCompare votes={r.prediction.compare} />

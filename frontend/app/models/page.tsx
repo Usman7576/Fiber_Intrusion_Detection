@@ -5,7 +5,7 @@ import { Award, Boxes, Gauge, Grid3x3, ShieldAlert, Trophy, Waypoints } from "lu
 import { useState } from "react";
 import { Bar, BarChart, CartesianGrid, Legend, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import { Badge, Card, CardHeader, EmptyState, Segmented, Skeleton, Stat } from "@/components/ui";
+import { Badge, Card, CardHeader, EmptyState, Select, Skeleton, Stat } from "@/components/ui";
 import { api, type ModelMetrics } from "@/lib/api";
 import { classMeta } from "@/lib/classes";
 import { ms, pct } from "@/lib/utils";
@@ -17,7 +17,18 @@ const tooltip = {
 };
 const axis = { tick: { fill: "#8B98AD", fontSize: 11 }, tickLine: false, axisLine: false } as const;
 const asPct = (v: number) => `${(v * 100).toFixed(1)}%`;
-const short = (m: ModelMetrics) => m.name.replace(" (per-sample norm)", " · sample").replace(" (per-point norm)", " · point");
+/** Model names break at " · " onto two lines so four labels fit on a phone. */
+function TwoLineTick({ x, y, payload }: { x?: number; y?: number; payload?: { value: string } }) {
+  const [a, b] = String(payload?.value ?? "").split(" · ");
+  return (
+    <text x={x} y={y} textAnchor="middle" fill="#8B98AD" fontSize={10}>
+      <tspan x={x} dy={12}>{a}</tspan>
+      {b && <tspan x={x} dy={12}>{b}</tspan>}
+    </text>
+  );
+}
+
+const short = (m: ModelMetrics) => m.name.replace(" (per-sample norm)", " · sample norm").replace(" (per-point norm)", " · point norm").replace("Tuned SVM", "Tuned · SVM").replace("Paper CNN", "Paper · CNN");
 
 function ConfusionMatrix({ m, classes }: { m: ModelMetrics; classes: string[] }) {
   const rowSums = m.confusion_matrix.map((r) => r.reduce((a, b) => a + b, 0));
@@ -120,21 +131,21 @@ export default function ModelsPage() {
         <Stat label="CPU latency" value={ms(deployed.latency_ms)} icon={<Gauge className="size-4" />} hint={svm ? `SVM ${ms(svm.latency_ms)} incl. features` : undefined} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader title="Official test split" subtitle={`Accuracy and macro-F1 · dashed lines: paper's reported SVM ${pct(paper_reported.svm)} and CNN ${pct(paper_reported.cnn)}`} icon={<Award className="size-4" />} />
           <div className="h-72 px-2 pb-4">
             <ResponsiveContainer>
               <BarChart data={accData} margin={{ top: 8, right: 12, left: -6, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="name" {...axis} interval={0} tick={{ fill: "#8B98AD", fontSize: 10 }} />
+                <XAxis dataKey="name" {...axis} interval={0} height={36} tick={<TwoLineTick />} />
                 <YAxis {...axis} domain={[0.8, 1]} tickFormatter={asPct} />
                 <Tooltip {...tooltip} formatter={(v) => asPct(Number(v))} />
                 <Legend wrapperStyle={{ fontSize: 12, color: "#8B98AD" }} />
                 <ReferenceLine y={paper_reported.cnn} stroke="#8B98AD" strokeDasharray="4 4" />
                 <ReferenceLine y={paper_reported.svm} stroke="#5B677B" strokeDasharray="4 4" />
-                <Bar dataKey="Accuracy" fill="#22D3EE" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Macro-F1" fill="#A78BFA" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Accuracy" fill="#22D3EE" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                <Bar dataKey="Macro-F1" fill="#A78BFA" radius={[4, 4, 0, 0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -146,33 +157,33 @@ export default function ModelsPage() {
             <ResponsiveContainer>
               <BarChart data={genData} margin={{ top: 8, right: 12, left: -6, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="name" {...axis} interval={0} tick={{ fill: "#8B98AD", fontSize: 10 }} />
+                <XAxis dataKey="name" {...axis} interval={0} height={36} tick={<TwoLineTick />} />
                 <YAxis {...axis} domain={[0.5, 1]} tickFormatter={asPct} />
                 <Tooltip {...tooltip} formatter={(v) => asPct(Number(v))} />
                 <Legend wrapperStyle={{ fontSize: 12, color: "#8B98AD" }} />
-                <Bar dataKey="Official split" fill="#22D3EE" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Unseen sessions" fill="#38BDF8" fillOpacity={0.7} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Unseen days" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Official split" fill="#22D3EE" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                <Bar dataKey="Unseen sessions" fill="#38BDF8" fillOpacity={0.7} radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                <Bar dataKey="Unseen days" fill="#F59E0B" radius={[4, 4, 0, 0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader title="Error rates" subtitle="Lower is better · digging is the threat that matters most for a buried cable" icon={<ShieldAlert className="size-4" />} />
           <div className="h-72 px-2 pb-4">
             <ResponsiveContainer>
               <BarChart data={errData} margin={{ top: 8, right: 12, left: -6, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="name" {...axis} interval={0} tick={{ fill: "#8B98AD", fontSize: 10 }} />
+                <XAxis dataKey="name" {...axis} interval={0} height={36} tick={<TwoLineTick />} />
                 <YAxis {...axis} tickFormatter={asPct} />
                 <Tooltip {...tooltip} formatter={(v) => `${(Number(v) * 100).toFixed(2)}%`} />
                 <Legend wrapperStyle={{ fontSize: 12, color: "#8B98AD" }} />
-                <Bar dataKey="False alarms (NAR)" fill="#94A3B8" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Missed events (FNR)" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Digging missed" fill="#F43F5E" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="False alarms (NAR)" fill="#94A3B8" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                <Bar dataKey="Missed events (FNR)" fill="#F59E0B" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+                <Bar dataKey="Digging missed" fill="#F43F5E" radius={[4, 4, 0, 0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -181,14 +192,14 @@ export default function ModelsPage() {
         <Card>
           <CardHeader title="At a glance" subtitle="Size, speed and per-class F1" icon={<Boxes className="size-4" />} />
           <div className="overflow-x-auto px-5 pb-5">
-            <table className="w-full min-w-[520px] text-sm">
+            <table className="w-full min-w-[640px] text-sm">
               <thead className="text-left text-xs text-faint">
                 <tr className="border-b border-line">
                   <th className="py-2 font-medium">Model</th>
-                  <th className="py-2 text-right font-medium">Params</th>
-                  <th className="py-2 text-right font-medium">Latency</th>
+                  <th className="py-2 pl-4 text-right font-medium">Params</th>
+                  <th className="py-2 pl-4 text-right font-medium">Latency</th>
                   {classes.map((c) => (
-                    <th key={c} className="py-2 text-right font-medium" title={`${classMeta(c).label} F1`}>
+                    <th key={c} className="py-2 pl-4 text-right font-medium" title={`${classMeta(c).label} F1`}>
                       <span style={{ color: classMeta(c).color }}>{classMeta(c).label.slice(0, 4)}</span>
                     </th>
                   ))}
@@ -202,12 +213,12 @@ export default function ModelsPage() {
                         <span className="font-medium">{m.name}</span>
                         {m.deployed && <Badge color="#22D3EE">deployed</Badge>}
                       </div>
-                      <div className="text-[11px] text-faint">{m.description}</div>
+                      <div className="max-w-[240px] text-[11px] text-faint">{m.description}</div>
                     </td>
-                    <td className="num py-2.5 text-right text-muted">{m.params ? `${(m.params / 1000).toFixed(m.params < 10000 ? 1 : 0)}k` : "—"}</td>
-                    <td className="num py-2.5 text-right text-muted">{ms(m.latency_ms)}</td>
+                    <td className="num py-2.5 pl-4 text-right whitespace-nowrap text-muted">{m.params ? `${(m.params / 1000).toFixed(m.params < 10000 ? 1 : 0)}k` : "—"}</td>
+                    <td className="num py-2.5 pl-4 text-right whitespace-nowrap text-muted">{ms(m.latency_ms)}</td>
                     {classes.map((c) => (
-                      <td key={c} className="num py-2.5 text-right">{m.per_class_f1[c].toFixed(3)}</td>
+                      <td key={c} className="num py-2.5 pl-4 text-right">{m.per_class_f1[c].toFixed(3)}</td>
                     ))}
                   </tr>
                 ))}
@@ -223,12 +234,14 @@ export default function ModelsPage() {
           subtitle="Official test split"
           icon={<Grid3x3 className="size-4" />}
           right={
-            <Segmented
-              label="Model"
-              value={selected.run}
-              onChange={setCm}
-              options={models.map((m) => ({ value: m.run, label: short(m) }))}
-            />
+            <Select aria-label="Model" value={selected.run} onChange={(e) => setCm(e.target.value)}>
+              {models.map((m) => (
+                <option key={m.run} value={m.run}>
+                  {m.name}
+                  {m.deployed ? " (deployed)" : ""}
+                </option>
+              ))}
+            </Select>
           }
         />
         <div className="px-5 pb-5">

@@ -13,7 +13,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <StreamProvider>{children}</StreamProvider>
-      <Toaster theme="dark" position="top-right" richColors closeButton toastOptions={{ className: "font-sans" }} />
+      <Toaster theme="dark" position="bottom-right" mobileOffset={{ bottom: 76 }} richColors closeButton toastOptions={{ className: "font-sans" }} />
     </QueryClientProvider>
   );
 }

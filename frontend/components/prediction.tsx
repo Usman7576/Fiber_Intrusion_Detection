@@ -70,12 +70,12 @@ export function PredictionSummary({
   const level = levelMeta(p.alert_level);
   const Icon = meta.icon;
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex flex-wrap items-center gap-4">
       <ConfidenceRing value={p.confidence} color={meta.color} />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-[150px] flex-1">
         <div className="flex items-center gap-2">
           <Icon className="size-6 shrink-0" style={{ color: meta.color }} />
-          <span className="truncate text-2xl font-semibold" style={{ color: meta.color }}>
+          <span className="text-2xl leading-tight font-semibold" style={{ color: meta.color }}>
             {meta.label}
           </span>
         </div>

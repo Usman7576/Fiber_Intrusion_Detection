@@ -67,9 +67,30 @@ Alert levels: `critical` = dig; `warning` = knock, shake; `info` = walk, water; 
 `uncertain` when confidence < 0.6. Settings are environment variables or `backend/.env` (copy `backend/.env.example`; see `backend/app/settings.py`), e.g.
 `FIBER_CORS_ORIGINS`, `FIBER_DB_PATH`, `FIBER_CONFIDENCE`.
 
+## Frontend (Next.js)
+
+Dark "control room" dashboard: live waterfall of the fiber, alerts with sound, upload/analysis with explanations,
+event history with CSV export, and the model comparison. Start the backend first, then:
+
+```powershell
+cd frontend
+npm install
+copy .env.example .env.local    # NEXT_PUBLIC_API_URL=http://localhost:8000
+npm run dev                     # http://localhost:3000
+```
+
+| Page | What it shows |
+|---|---|
+| `/` Live Monitor | scrolling waterfall (12 points x time), current prediction with confidence ring, fiber route with the most active point glowing, recent detections, pause / speed / sound controls; threat banner + toast + beep on every page |
+| `/analyze` | drop a `.mat` file or pick a test sample: prediction, signal with Integrated-Gradients overlay, Grad-CAM over time, importance per point, Net1D vs SVM vs paper CNN |
+| `/events` | event history with class / level / source / time filters, auto-refresh, CSV export |
+| `/models` | accuracy and macro-F1, generalisation to unseen sessions and days, error rates, size and speed, confusion matrices |
+| `/about` | how Phi-OTDR sensing works, the six classes, key findings, citation |
+
 ## Tests
 
 ```powershell
 pytest ml/tests
 cd backend; pytest
+cd ../frontend; npm run lint; npm run build
 ```

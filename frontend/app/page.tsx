@@ -50,8 +50,8 @@ export default function LiveMonitor() {
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <Card className="xl:col-span-2">
           <CardHeader
             title="Waterfall"
             subtitle="Vibration intensity at each sensing point over time"
@@ -93,8 +93,8 @@ export default function LiveMonitor() {
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+        <Card className="xl:col-span-2">
           <CardHeader
             title="Fiber route"
             subtitle="12 sensing points along the cable; the glowing node is the most active one"

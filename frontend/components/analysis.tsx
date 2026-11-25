@@ -75,7 +75,7 @@ export function SignalMap({ signal, explanation }: { signal: number[][]; explana
           ref={ref}
           width={T}
           height={signal.length}
-          className="block h-[220px] min-w-0 flex-1 rounded-lg ring-1 ring-line"
+          className="block h-[220px] w-full min-w-0 flex-1 rounded-lg ring-1 ring-line"
           style={{ imageRendering: "pixelated" }}
           role="img"
           aria-label="Signal heatmap"

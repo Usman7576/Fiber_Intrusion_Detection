@@ -26,7 +26,7 @@ function Logo() {
       </div>
       <div className="leading-tight">
         <div className="text-sm font-semibold tracking-wide">FiberGuard</div>
-        <div className="text-[10px] uppercase tracking-[0.18em] text-faint">Φ-OTDR monitor</div>
+        <div className="hidden text-[10px] uppercase tracking-[0.18em] text-faint sm:block">Φ-OTDR monitor</div>
       </div>
     </div>
   );
@@ -100,7 +100,7 @@ function Clock() {
     return () => clearInterval(t);
   }, []);
   return (
-    <span className="num text-xs text-muted" suppressHydrationWarning>
+    <span className="num hidden text-xs text-muted sm:inline" suppressHydrationWarning>
       {now ? now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "--:--:--"}
     </span>
   );
@@ -123,7 +123,7 @@ function StatusPill() {
   return (
     <span
       role="status"
-      className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold"
+      className="inline-flex max-w-[180px] items-center gap-2 truncate rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap sm:max-w-none"
       style={{ backgroundColor: `${color}1a`, color, boxShadow: `inset 0 0 0 1px ${color}40` }}
     >
       <span className="live-dot size-2 rounded-full" style={{ backgroundColor: color }} />

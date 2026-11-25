@@ -55,7 +55,7 @@ export default function AboutPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader title="The six classes" icon={<Cable className="size-4" />} />
           <ul className="grid gap-2 px-5 pb-5 sm:grid-cols-2">
