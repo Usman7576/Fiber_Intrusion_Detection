@@ -25,7 +25,7 @@ well any model handles a new site. Details: [baselines](results/baselines.md),
 [improved model](results/improved_model.md), [generalisation and explainability](results/cross_session.md),
 notebooks [01_explore](ml/notebooks/01_explore.ipynb) and [02_results](ml/notebooks/02_results.ipynb).
 
-**Project report (Word):** [docs/FiberGuard_Project_Report.docx](docs/FiberGuard_Project_Report.docx).
+**Project report (Word):** [docs/FiberGuard_Project_Report.docx](docs/FiberGuard_Project_Report.docx) · **Viva slides (PowerPoint, with speaker notes):** [docs/FiberGuard_Viva_Slides.pptx](docs/FiberGuard_Viva_Slides.pptx).
 
 Findings in one line each:
 - The paper's SVM is far stronger than reported (98.8% once C/gamma are tuned); its code also has a uint16 wrap-around
