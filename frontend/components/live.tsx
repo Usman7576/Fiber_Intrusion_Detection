@@ -83,8 +83,8 @@ export function LiveHeatmap() {
           )}
         </div>
       </div>
-      <div className="mt-2 flex items-center justify-between gap-3 pl-9 text-[10px] text-faint">
-        <span>← older (~6 s)</span>
+      <div className="mt-2 flex items-center justify-center gap-3 pl-9 text-[10px] text-faint sm:justify-between">
+        <span className="hidden sm:inline">← older (~6 s)</span>
         <div className="flex items-center gap-2">
           <span>quiet</span>
           <span
@@ -93,7 +93,7 @@ export function LiveHeatmap() {
           />
           <span>strong vibration</span>
         </div>
-        <span>now →</span>
+        <span className="hidden sm:inline">now →</span>
       </div>
     </div>
   );

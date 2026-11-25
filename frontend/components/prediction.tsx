@@ -113,13 +113,15 @@ export function ModelCompare({ votes }: { votes: ModelVote[] }) {
         return (
           <li key={v.model} className="flex items-center gap-3 py-2.5 text-sm">
             <Cpu className="size-4 shrink-0 text-faint" />
-            <span className="min-w-0 flex-1 truncate text-muted">{MODEL_LABELS[v.model] ?? v.model}</span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-muted">{MODEL_LABELS[v.model] ?? v.model}</div>
+              <div className="num text-[11px] text-faint">{ms(v.latency_ms)}</div>
+            </div>
             <Badge color={meta.color}>
               <meta.icon className="size-3" />
               {meta.label}
             </Badge>
             <span className="num w-14 text-right text-xs text-ink">{pct(v.confidence)}</span>
-            <span className="num hidden w-16 text-right text-xs text-faint sm:inline">{ms(v.latency_ms)}</span>
           </li>
         );
       })}

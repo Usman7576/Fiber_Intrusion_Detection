@@ -190,19 +190,16 @@ export default function ModelsPage() {
         </Card>
 
         <Card>
-          <CardHeader title="At a glance" subtitle="Size, speed and per-class F1" icon={<Boxes className="size-4" />} />
+          <CardHeader title="At a glance" subtitle="Size, speed, overall F1 and accuracy on unseen recording days" icon={<Boxes className="size-4" />} />
           <div className="overflow-x-auto px-5 pb-5">
-            <table className="w-full min-w-[640px] text-sm">
+            <table className="w-full min-w-[480px] text-sm">
               <thead className="text-left text-xs text-faint">
                 <tr className="border-b border-line">
                   <th className="py-2 font-medium">Model</th>
-                  <th className="py-2 pl-4 text-right font-medium">Params</th>
-                  <th className="py-2 pl-4 text-right font-medium">Latency</th>
-                  {classes.map((c) => (
-                    <th key={c} className="py-2 pl-4 text-right font-medium" title={`${classMeta(c).label} F1`}>
-                      <span style={{ color: classMeta(c).color }}>{classMeta(c).label.slice(0, 4)}</span>
-                    </th>
-                  ))}
+                  <th className="py-2 pl-3 text-right font-medium">Params</th>
+                  <th className="py-2 pl-3 text-right font-medium">Latency</th>
+                  <th className="py-2 pl-3 text-right font-medium">Macro-F1</th>
+                  <th className="py-2 pl-3 text-right font-medium" title="accuracy with whole recording days held out">Unseen days</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -213,13 +210,12 @@ export default function ModelsPage() {
                         <span className="font-medium">{m.name}</span>
                         {m.deployed && <Badge color="#22D3EE">deployed</Badge>}
                       </div>
-                      <div className="max-w-[240px] text-[11px] text-faint">{m.description}</div>
+                      <div className="max-w-[200px] text-[11px] text-faint">{m.description}</div>
                     </td>
-                    <td className="num py-2.5 pl-4 text-right whitespace-nowrap text-muted">{m.params ? `${(m.params / 1000).toFixed(m.params < 10000 ? 1 : 0)}k` : "—"}</td>
-                    <td className="num py-2.5 pl-4 text-right whitespace-nowrap text-muted">{ms(m.latency_ms)}</td>
-                    {classes.map((c) => (
-                      <td key={c} className="num py-2.5 pl-4 text-right">{m.per_class_f1[c].toFixed(3)}</td>
-                    ))}
+                    <td className="num py-2.5 pl-3 text-right whitespace-nowrap text-muted">{m.params ? `${(m.params / 1000).toFixed(m.params < 10000 ? 1 : 0)}k` : "—"}</td>
+                    <td className="num py-2.5 pl-3 text-right whitespace-nowrap text-muted">{ms(m.latency_ms)}</td>
+                    <td className="num py-2.5 pl-3 text-right">{m.macro_f1.toFixed(3)}</td>
+                    <td className="num py-2.5 pl-3 text-right">{pct(m.unseen_days_accuracy)}</td>
                   </tr>
                 ))}
               </tbody>
