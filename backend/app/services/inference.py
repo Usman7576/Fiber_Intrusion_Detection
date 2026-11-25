@@ -23,6 +23,10 @@ from phiotdr.preprocess import display_signal, preprocess
 from ..settings import Settings
 
 SIGNAL_POINTS = 500          # time resolution sent to the browser for plots
+# Plotted signals are in multiples of this raw level (ADC counts): about the noise of quiet fiber in this dataset
+# (median per-point std of background samples ~18-23). A fixed unit keeps quiet fiber dark and events bright in the
+# waterfall; scaling each sample by its own std would make background look as active as digging.
+NOISE_REF = 25.0
 EXPLAIN_BINS = 100           # time resolution of explanation maps
 
 
@@ -45,7 +49,7 @@ def point_energy(point_std: np.ndarray) -> np.ndarray:
 class Prepared:
     """A sample ready for every model: deployed-model input, plot signal, location info, SVM features (optional)."""
     model_input: np.ndarray          # (12, 1000) float32
-    display: np.ndarray              # (12, 1000) float32
+    display: np.ndarray              # (12, 1000) float32, in NOISE_REF units (for plots / the live waterfall)
     point_std: np.ndarray            # (12,)
     features: np.ndarray | None      # (384,)
     prep_ms: float = 0.0
@@ -77,7 +81,9 @@ class DemoSamples:
     def prepared(self, i: int) -> Prepared:
         d = self.display[i]
         sample_in = None if self.s_scale is None else d * self.s_scale[i] + self.s_offset[i][:, None]
-        return Prepared(d * self.to_model[i][:, None], d, self.point_std[i], self.features[i], 0.0, sample_in)
+        to_raw = float((self.to_model[i] * self.point_std[i]).mean())       # = the sample's global std, raw units
+        return Prepared(d * self.to_model[i][:, None], d * (to_raw / NOISE_REF), self.point_std[i], self.features[i],
+                        0.0, sample_in)
 
 
 class Engine:
@@ -109,7 +115,8 @@ class Engine:
         t0 = time.perf_counter()
         raw = load_mat(io.BytesIO(data))
         x = preprocess(raw, factor=self.downsample, mode=self.normalise)
-        display, _, pstd = display_signal(raw, self.downsample)
+        display, to_model, pstd = display_signal(raw, self.downsample)
+        display = display * float((to_model * pstd).mean() / NOISE_REF)
         prep_ms = (time.perf_counter() - t0) * 1000
         feats = sample_features(raw).astype(np.float32) if self.svm is not None else None
         sample_in = (preprocess(raw, factor=self.downsample, mode=self.baseline_norm)

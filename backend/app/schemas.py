@@ -43,7 +43,7 @@ class Prediction(BaseModel):
 class UploadPrediction(Prediction):
     file: str
     event_id: int
-    signal: list[list[float]] = Field(description="12 x 500 display signal for plotting")
+    signal: list[list[float]] = Field(description="12 x 500 signal for plotting, in multiples of quiet-fiber noise")
 
 
 class SampleInfo(BaseModel):
@@ -61,7 +61,7 @@ class SampleList(BaseModel):
 
 
 class SampleSignal(SampleInfo):
-    signal: list[list[float]] = Field(description="12 x 500 display signal (per-point mean removed, one global scale)")
+    signal: list[list[float]] = Field(description="12 x 500 signal, per-point mean removed, in multiples of quiet-fiber noise")
     point_energy: list[float]
 
 
