@@ -7,7 +7,7 @@ name = "phiotdr"
 version = "0.1.0"
 description = "Phi-OTDR fiber intrusion detection: data loading, preprocessing, models, evaluation"
 requires-python = ">=3.10,<3.14"
-dependencies = ["numpy", "scipy", "pandas", "scikit-learn", "torch"]
+dependencies = ["numpy", "scipy", "pandas", "scikit-learn", "torch", "captum"]
 
 [tool.setuptools]
 packages = ["phiotdr"]

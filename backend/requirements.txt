@@ -1,0 +1,17 @@
+# Backend runtime only (the full research environment is ../requirements.txt).
+# CPU-only PyTorch wheels:
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+numpy
+scipy
+pandas
+scikit-learn
+joblib
+captum
+fastapi
+uvicorn[standard]
+python-multipart
+sqlalchemy
+pydantic
+# shared preprocessing/model code (path relative to the repository root, where install commands are run)
+-e ./ml
